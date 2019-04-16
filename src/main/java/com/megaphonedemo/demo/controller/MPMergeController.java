@@ -6,6 +6,7 @@ import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -26,8 +27,7 @@ public class MPMergeController {
 
     @CrossOrigin(origins = "http://localhost:63342")
     @PostMapping(path = "/mp3")
-    public void mergeMPFiles(@RequestBody MPInfo mpData, HttpServletResponse response){
-
+    public InputStreamResource mergeMPFiles(@RequestBody MPInfo mpData, HttpServletResponse response){
 
         Vector<InputStream> filesToMerge = this.mpMergeService.downloadDataToMerge(mpData.getUrls());
         Enumeration<InputStream> enu = filesToMerge.elements();
@@ -35,17 +35,13 @@ public class MPMergeController {
 
         response.addHeader("X-Megaphone-Payload",mpData.getHeaders().getHeaderPayloadOne());
         response.addHeader("X-Megaphone-Payload-2", mpData.getHeaders().getHeaderPayloadTwo());
-        response.addHeader("Content-disposition", "attachment;filename=MergedPodCast.mp3");
+        response.setHeader("Content-Disposition", "attachment; filename=\"Merged_PodCast.mp3\"");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Expires", "0");
 
-        try {
-            IOUtils.copy(sequenceInputStream,response.getOutputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            response.flushBuffer();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        InputStreamResource resource = new InputStreamResource(sequenceInputStream);
+
+        return resource;
     }
 }
